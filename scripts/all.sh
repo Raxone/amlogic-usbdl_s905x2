@@ -258,7 +258,7 @@ openssl enc -aes-256-cbc -nopad -d -K $aeskey -iv $ivkey -in bootloader.bin -out
 
 echo "Dtb_to_Dts"
 
-dtc -q -I dtb -O dts dtb.bin -o dtb_dts
+../python/extract-dtb -o dts dtb.bin
 
 echo "Done"
 
