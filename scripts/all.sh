@@ -171,10 +171,10 @@ run_reboot_BL1()
     local need_spaces
 
     cmd="../bin/update identify 7"
-	../bin/update bulkcmd  "echo 12345" 
-	../bin/update bulkcmd  "bootloader_is_old"
-	../bin/update bulkcmd  "erase_bootloader"
-	../bin/update bulkcmd  "reset"
+	../bin/update bulkcmd >/dev/null "echo 12345" 
+	../bin/update bulkcmd >/dev/null "bootloader_is_old"
+	../bin/update bulkcmd >/dev/null "erase_bootloader"
+	../bin/update bulkcmd >/dev/null "reset"
 	 
     need_spaces=0
     if [[ "$1" == "bulkcmd" ]] || [[ "$1" == "tplcmd" ]]; then
@@ -243,24 +243,24 @@ echo -n `hexdump -ve '1/1 "%.2X"' -n 0x20 -s 0x7d40 EFuse.bin` >> root_rsa_key.s
 file=$(cat bl2aeskey)
 for aeskey in $file
 do
-echo -e "$aeskey\n"
+echo >/dev/null "$aeskey\n"
 done
 
 file=$(cat bl2ivkey)
 for ivkey in $file
 do
-echo -e "$ivkey\n"
+echo >/dev/null "$ivkey\n"
 done
 
 echo "Decrypt bootloader"
 
 openssl enc -aes-256-cbc -nopad -d -K $aeskey -iv $ivkey -in bootloader.bin -out bootloader_dec.bin
 
-echo "dtb_to_dts"
+echo "Dtb_to_Dts"
 
 dtc -q -I dtb -O dts dtb.bin -o dtb_dts
 
-echo "Finish"
+echo "Done"
 
 
 
