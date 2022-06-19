@@ -32,6 +32,8 @@ To put box to usbdl mod with toothpick in AV hole on box push button and connect
 
 * cd amlogic-usbdl_s905x2
 
+* chmod +x -R .   ##fix permission denied for all scripts and bin's.
+
 * ./scripts/all.sh        
 
 * All files be in dump_all dir.
@@ -42,6 +44,7 @@ To put box to usbdl mod with toothpick in AV hole on box push button and connect
 * dtb.bin  -Device tree blob binary 
 * dtb_dts  -Device tree blob txt
 * root_rsa_keys.sha -sha256 of rootkeys used for encrypt booloader.
+* pattern.secureboot.efuse -pattern writed in efuse from manufacturer to enable secureboot
 
 
 
