@@ -32,7 +32,7 @@ To put box to usbdl mod with toothpick in AV hole on box push button and connect
 
 * cd amlogic-usbdl_s905x2
 
-* chmod +x -R .         -fix permission command with point
+* chmod +x -R .         -fix permission.Command is with point
 * ./scripts/all.sh        
 
 * All files be in dump_all dir.
