@@ -260,6 +260,13 @@ echo "Dtb_to_Dts"
 
 ../python/extract-dtb -o dts dtb.bin
 
+echo "DTB_to_DTS"
+
+cd dts
+
+dtc -q -I dtb -O dts -o dts1 01_dtbdump_Amlogic.dtb
+dtc -q -I dtb -O dts -o dts2 02_dtbdump_Amlogic.dtb
+
 echo "Done"
 
 
