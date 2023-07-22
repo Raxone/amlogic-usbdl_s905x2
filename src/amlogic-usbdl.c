@@ -210,12 +210,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	if(identity[4])
-	{
-		fprintf(stderr, "Error: device is protected by password.\n");
-		return EXIT_FAILURE;
-	}
-	else
+
 	{
 		exploit(payload);
 	}
