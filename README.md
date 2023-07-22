@@ -1,7 +1,6 @@
 # unsigned code loader for Amlogic bootrom
 
 * https://github.com/frederic/amlogic-usbdl.git
-* https://github.com/Raxone/amlogic-usbdl_s905x2.git
 * https://github.com/repk/gxlimg.git
 
 ## Changes 
