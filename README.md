@@ -4,7 +4,7 @@
 * https://github.com/repk/gxlimg.git
 
 ## Changes 
-Minor changes of memory address from orginal frederic amlogic_usbdl for s905x2.
+
 * 22.07.2023
 * add support for usb password protect
 * fix some script 
