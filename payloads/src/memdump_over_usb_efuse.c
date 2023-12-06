@@ -46,7 +46,7 @@ void _start()
     _dwc_pcd_irq();  //clear USB state
     _dwc_pcd_irq();  //after exploitation
 
-    usb_setup_bulk_in((unsigned char *)BOOTROM_ADDR, 0x10000);
+    usb_setup_bulk_in((unsigned char *)BOOTROM_ADDR, 0x8000);
     do
     {
         watchdog_reset();
