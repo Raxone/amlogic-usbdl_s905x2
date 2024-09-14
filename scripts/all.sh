@@ -169,6 +169,44 @@ run_dump_boot()
     return 0
 }
 
+run_dump_dtbo()
+{
+    local cmd
+    local need_spaces
+
+    cmd="../bin/update mread store dtbo normal 0x800000 dtbo.bin"
+    need_spaces=0
+    if [[ "$1" == "bulkcmd" ]] || [[ "$1" == "tplcmd" ]]; then
+       need_spaces=1
+    fi
+    cmd+=" $1"
+    shift 1
+
+    for arg in "$@"; do
+        if [[ "$arg" =~ ' ' ]]; then
+           cmd+=" \"     $arg\""
+        else
+           if [[ $need_spaces == 1 ]]; then
+              cmd+=" \"     $arg\""
+           else
+              cmd+=" $arg"
+           fi
+        fi
+    done
+
+    update_return=""
+    print_debug "\nCommand ->$CYAN $cmd $RESET"
+    if [[ "$simu" != "1" ]]; then
+       update_return=`eval "$cmd"`
+    fi
+    print_debug "- Results ---------------------------------------------------"
+    print_debug "$RED $update_return $RESET"
+    print_debug "-------------------------------------------------------------"
+    print_debug ""
+    return 0
+}
+
+
 
 run_dump_dtb()
 {
@@ -253,10 +291,15 @@ run_reboot_BL1()
 run_update_assert
 
 
-cp -a ./dump_all backup_`date +"%m%d_%H%M"`
+# Check if dump_all exists and handle backup and setup
+if [[ -d ./dump_all ]]; then
+    echo "Backing up existing dump_all directory"
+    cp -a ./dump_all "backup_$(date +"%m%d_%H%M")"
+fi
+
 rm -rf ./dump_all
 mkdir ./dump_all
-cd ./dump_all
+cd ./dump_all || exit
 
 echo "Dump Bootloader"
 
@@ -269,6 +312,10 @@ run_dump_dtb
 echo "Dump Boot"
 
 run_dump_boot
+
+echo "Dump dtbo"
+
+run_dump_dtbo
 
 echo "Reboot to BL1"
 
@@ -371,7 +418,7 @@ echo "Extract All"
 dd if=bootloader_dec.bin skip=128 count=32 of=fip.bin status=none
 dd if=bootloader_dec.bin bs=1 skip=680 count=1036 of=bl2key.bin status=none
 dd if=bootloader_dec.bin bs=1 skip=2928 count=1036 of=rootkey.bin status=none
-dd if=bootloader.bin bs=1 skip=500736 count=787968 of=u-boot_enc.bin status=none
+#dd if=bootloader.bin bs=1 skip=500736 count=787968 of=u-boot_enc.bin status=none
 #dd >/dev/null if=boot.bin bs=1 skip=2304 count=9734268 of=boot_enc.bin status=none
 
 
@@ -393,7 +440,7 @@ do
 echo >/dev/null "$ivkey\n"
 done
 
-openssl enc -aes-256-cbc -nopad -d -K $bl3xaeskey -iv $ivkey -in u-boot_enc.bin -out u-boot_dec.bin
+#openssl enc -aes-256-cbc -nopad -d -K $bl3xaeskey -iv $ivkey -in u-boot_enc.bin -out u-boot_dec.bin
 
 #echo "Decrypt Boot"
 
@@ -415,14 +462,49 @@ fi
 
 echo "Extract_DTB"
 
-../python/extract-dtb -o dts dtb.bin
+if [[ -f dtb.bin ]]; then
+    ../python/extract-dtb -o dts dtb.bin
+else
+    echo "dtb.bin not found!"
+    exit 1
+fi
 
 echo "DTB_to_DTS"
 
-cd dts
+cd dts || exit
 
+echo "Extract DTB to DTS"
+
+# Check if 01_dtbdump_Amlogic.dtb exists
+if [[ ! -f 01_dtbdump_Amlogic.dtb ]]; then
+    echo "Error: 01_dtbdump_Amlogic.dtb not found!"
+    exit 1
+fi
+
+# Convert DTB to DTS for 01_dtbdump_Amlogic.dtb
 dtc -q -I dtb -O dts -o dts1 01_dtbdump_Amlogic.dtb
-dtc -q -I dtb -O dts -o dts2 02_dtbdump_Amlogic.dtb
+
+# Check if conversion of 01_dtbdump_Amlogic.dtb was successful
+if [[ $? -ne 0 ]]; then
+    echo "Error: Failed to convert 01_dtbdump_Amlogic.dtb to dts1"
+    exit 1
+fi
+
+# Check if 02_dtbdump_Amlogic.dtb exists
+if [[ -f 02_dtbdump_Amlogic.dtb ]]; then
+    # Convert DTB to DTS for 02_dtbdump_Amlogic.dtb
+    dtc -q -I dtb -O dts -o dts2 02_dtbdump_Amlogic.dtb
+
+    # Check if conversion of 02_dtbdump_Amlogic.dtb was successful
+    if [[ $? -ne 0 ]]; then
+        echo "Error: Failed to convert 02_dtbdump_Amlogic.dtb to dts2"
+        exit 1
+    fi
+else
+    echo "02_dtbdump_Amlogic.dtb not found. Only 01_dtbdump_Amlogic.dtb has been processed."
+fi
+
+echo "DTB to DTS conversion completed successfully"
 
 
 echo "Extract Bootloader signed bl2,bl30,bl31,bl33_uboot" 
@@ -431,34 +513,54 @@ cd ..
 
 mkdir image
 
-../bin/gxlimg -e bootloader_dec.bin image
+if [[ -f bootloader_dec.bin ]]; then
+    ../bin/gxlimg -e bootloader_dec.bin image
+else
+    echo "bootloader_dec.bin not found!"
+    exit 1
+fi
 
+cd image || exit
 
+echo "Extract bl33.bin & U-boot_LZ4"
 
+# Check if bl33.enc exists
+if [[ ! -f bl33.enc ]]; then
+    echo "Error: bl33.enc not found!"
+    exit 1
+fi
 
+# Check if bl2.sign exists
+if [[ ! -f bl2.sign ]]; then
+    echo "Error: bl2.sign not found!"
+    exit 1
+fi
 
+# Find the offset for the LZ4C marker in bl33.enc
+IN_OFFSET=$(grep --byte-offset --only-matching --text LZ4C bl33.enc | head -1 | cut -d: -f1)
 
+# Check if the LZ4C marker was found
+if [[ -z "$IN_OFFSET" ]]; then
+    echo "Error: LZ4C marker not found in bl33.enc"
+    exit 1
+fi
 
+# Extract the bl33.bin from the bl33.enc file
+dd if=bl33.enc of=bl33.bin skip=$IN_OFFSET bs=1 conv=notrunc > /dev/null 2>&1
+
+# Check if extraction of bl33.bin was successful
+if [[ $? -ne 0 ]]; then
+    echo "Error: Failed to extract bl33.bin"
+    exit 1
+fi
+
+# Extract the acs.bin from the bl2.sign file
+dd if=bl2.sign of=acs.bin skip=61440 bs=1 count=4096 > /dev/null 2>&1
+
+# Check if extraction of acs.bin was successful
+if [[ $? -ne 0 ]]; then
+    echo "Error: Failed to extract acs.bin"
+    exit 1
+fi
 
 echo "Done"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
