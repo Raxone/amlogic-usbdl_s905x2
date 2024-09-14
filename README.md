@@ -5,8 +5,8 @@
 
 ## Changes 
 
-* 22.07.2023
-* add support for usb password protect
+* 14.09.2024
+* add extract acs.bin, bl33.bin(U-boot_LZ4)
 * fix some script 
 
 ## Disclaimer
@@ -37,7 +37,6 @@ To put box to usbdl mod with toothpick in AV hole on box push button and connect
 
 * If board usb password protect, put password file in password folder,and rename to password.bin
 
-* chmod +x -R .         -fix permission.Command is with point
 * ./scripts/all.sh        
 
 * All files be in dump_all dir.
